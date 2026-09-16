@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "syaifulmain.omashowkeys",
+  "name": "OmaShowKeys",
+  "version": "1.0.0",
+  "author": "Muhamad Syaifullah",
+  "license": "MIT",
+  "description": "On-screen keycast pill in wshowkeys style: shows pressed keys bottom-center, follows the Omarchy theme, toggled from the bar.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "OmaShowKeys",
+    "description": "Shows pressed keys on screen. The popup holds the on/off switch and opens Key settings.",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "enabled": true,
+      "maxKeys": 5,
+      "hideDelayMs": 1000,
+      "scale": 1,
+      "bgMode": "default",
+      "position": "bottom",
+      "excluded": {},
+      "keyLabels": {}
+    }
+  }
+}

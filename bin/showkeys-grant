@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Grant keyboard read access for syaifulmain.showkeys — one password prompt.
+# Run as root via pkexec (graphical prompt through the Omarchy polkit agent):
+#   pkexec /path/to/bin/showkeys-grant
+# Or directly with sudo. Installs a udev rule (persistent) and applies the
+# ACL to already-present devices (immediate, no logout).
+set -euo pipefail
+
+TARGET_UID="${PKEXEC_UID:-0}"
+# Never trust env blindly: SUDO_USER/PKEXEC_UID spoofable if script
+# run manually. Resolve UID -> user via system lookup only.
+if [ -n "${SUDO_UID:-}" ] && [ "${SUDO_UID}" != "0" ]; then
+  TARGET_UID="$SUDO_UID"
+fi
+case "$TARGET_UID" in ''|*[!0-9]*) echo "bad UID: $TARGET_UID" >&2; exit 1;; esac
+if [ "$TARGET_UID" = "0" ]; then echo "refuse: target is root (run as user via pkexec/sudo)" >&2; exit 1; fi
+if [ "$TARGET_UID" -lt 1000 ]; then echo "refuse: UID $TARGET_UID below 1000 (system user)" >&2; exit 1; fi
+TARGET_USER="$(id -nu "$TARGET_UID")"
+# Double-check lookup round-trips (stale nscache / spoof guard).
+[ "$(id -u "$TARGET_USER")" = "$TARGET_UID" ] || { echo "UID lookup mismatch" >&2; exit 1; }
+
+SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RULE_SRC="$SRC_DIR/rules/71-syaifulmain-showkeys.rules"
+RULE_DST="/etc/udev/rules.d/71-syaifulmain-showkeys.rules"
+
+[ -f "$RULE_SRC" ] || { echo "rule source missing: $RULE_SRC" >&2; exit 1; }
+# Pin rule content: plugin dir user-writable, pkexec runs as root.
+# Attacker swapping rules/ file = root persistence. Refuse unless exact match.
+EXPECTED='SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", TAG+="uaccess"'
+ACTUAL="$(grep -v '^#' "$RULE_SRC" | grep -v '^$' | tr -d '\n')"
+[ "$ACTUAL" = "$EXPECTED" ] || { echo "rule content mismatch, abort" >&2; exit 1; }
+id "$TARGET_USER" &>/dev/null || { echo "unknown user: $TARGET_USER" >&2; exit 1; }
+
+install -o root -g root -m 0644 "$RULE_SRC" "$RULE_DST"
+udevadm control --reload-rules
+udevadm trigger --subsystem-match=input --action=change || true
+
+# Immediate fallback while logind applies the uaccess ACLs.
+# Keyboard-only: old loop ACL'd mice/touchpad/power too (overbroad read).
+for dev in /dev/input/event*; do
+  [ -e "$dev" ] || continue
+  if command -v udevadm >/dev/null 2>&1; then
+    if ! udevadm info --query=property --name="$dev" 2>/dev/null | grep -q '^ID_INPUT_KEYBOARD=1$'; then
+      continue
+    fi
+  fi
+  setfacl -m "u:${TARGET_USER}:r" "$dev" 2>/dev/null || true
+done
+
+echo "granted ${TARGET_USER}"

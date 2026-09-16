@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Revoke keyboard read access for syaifulmain.showkeys — safe full clean.
+# Run as root via pkexec (graphical prompt through the Omarchy polkit agent):
+#   pkexec /path/to/bin/showkeys-revoke
+# Or directly with sudo. Run BEFORE `omarchy plugin remove` (script lives
+# inside the plugin dir). Removes ONLY our udev rule + ONLY our user ACL.
+set -euo pipefail
+
+TARGET_UID="${PKEXEC_UID:-0}"
+if [ -n "${SUDO_UID:-}" ] && [ "${SUDO_UID}" != "0" ]; then
+  TARGET_UID="$SUDO_UID"
+fi
+case "$TARGET_UID" in ''|*[!0-9]*) echo "bad UID: $TARGET_UID" >&2; exit 1;; esac
+if [ "$TARGET_UID" = "0" ]; then echo "refuse: target is root (run as user via pkexec/sudo)" >&2; exit 1; fi
+if [ "$TARGET_UID" -lt 1000 ]; then echo "refuse: UID $TARGET_UID below 1000 (system user)" >&2; exit 1; fi
+TARGET_USER="$(id -nu "$TARGET_UID")"
+[ "$(id -u "$TARGET_USER")" = "$TARGET_UID" ] || { echo "UID lookup mismatch" >&2; exit 1; }
+
+RULE_DST="/etc/udev/rules.d/71-syaifulmain-showkeys.rules"
+
+# Safety pin: never delete a foreign rule file. Only our filename, and only
+# if it carries our marker (protects against manual overwrites by other pkgs).
+if [ -f "$RULE_DST" ]; then
+  if grep -q "syaifulmain.showkeys" "$RULE_DST"; then
+    rm -f "$RULE_DST"
+    echo "removed $RULE_DST"
+  else
+    echo "refuse: $RULE_DST exists but is not ours, left untouched" >&2
+    exit 1
+  fi
+else
+  echo "rule already gone"
+fi
+
+udevadm control --reload-rules
+udevadm trigger --subsystem-match=input --action=change || true
+
+# Remove ONLY our user entry (-x). Never -b: -b wipes ACLs of other apps.
+cleaned=0
+for dev in /dev/input/event*; do
+  [ -e "$dev" ] || continue
+  if getfacl -p "$dev" 2>/dev/null | grep -q "^user:${TARGET_USER}:r"; then
+    setfacl -x "u:${TARGET_USER}" "$dev" 2>/dev/null && cleaned=$((cleaned + 1)) || true
+  fi
+done
+
+echo "revoked ${TARGET_USER} (ACL entries removed: ${cleaned})"
+
+# Verify: rule gone + no leftover user ACL on keyboards.
+leftover=0
+for dev in /dev/input/event*; do
+  [ -e "$dev" ] || continue
+  if getfacl -p "$dev" 2>/dev/null | grep -q "^user:${TARGET_USER}:r"; then
+    echo "leftover ACL: $dev" >&2
+    leftover=$((leftover + 1))
+  fi
+done
+[ -f "$RULE_DST" ] && { echo "rule still present!" >&2; exit 1; }
+[ "$leftover" -eq 0 ] || { echo "$leftover device(s) still carry ACL (re-login clears uaccess)" >&2; exit 1; }
+echo "clean"
