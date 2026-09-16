@@ -19,19 +19,25 @@ TARGET_USER="$(id -nu "$TARGET_UID")"
 # Double-check lookup round-trips (stale nscache / spoof guard).
 [ "$(id -u "$TARGET_USER")" = "$TARGET_UID" ] || { echo "UID lookup mismatch" >&2; exit 1; }
 
-SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RULE_SRC="$SRC_DIR/rules/71-syaifulmain-showkeys.rules"
 RULE_DST="/etc/udev/rules.d/71-syaifulmain-showkeys.rules"
+# Fixed rule content, embedded in this root-executed script. Never copy from
+# the user-writable plugin dir (TOCTOU: validate-then-copy as root = swap
+# race -> arbitrary udev content in /etc). File under rules/ is reference
+# only; install uses bytes below.
+RULE_LINE='SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", TAG+="uaccess"'
 
-[ -f "$RULE_SRC" ] || { echo "rule source missing: $RULE_SRC" >&2; exit 1; }
-# Pin rule content: plugin dir user-writable, pkexec runs as root.
-# Attacker swapping rules/ file = root persistence. Refuse unless exact match.
-EXPECTED='SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", TAG+="uaccess"'
-ACTUAL="$(grep -v '^#' "$RULE_SRC" | grep -v '^$' | tr -d '\n')"
-[ "$ACTUAL" = "$EXPECTED" ] || { echo "rule content mismatch, abort" >&2; exit 1; }
 id "$TARGET_USER" &>/dev/null || { echo "unknown user: $TARGET_USER" >&2; exit 1; }
 
-install -o root -g root -m 0644 "$RULE_SRC" "$RULE_DST"
+TMP_RULE="$(mktemp /etc/udev/rules.d/.71-syaifulmain-showkeys.XXXXXX)"
+trap 'rm -f "$TMP_RULE"' EXIT
+printf '%s\n' \
+  '# syaifulmain.showkeys: let the active local user read keyboards.' \
+  '# Installed by bin/showkeys-grant (pkexec = one password prompt).' \
+  "$RULE_LINE" > "$TMP_RULE"
+chown root:root "$TMP_RULE"
+chmod 0644 "$TMP_RULE"
+mv -f "$TMP_RULE" "$RULE_DST"
+trap - EXIT
 udevadm control --reload-rules
 udevadm trigger --subsystem-match=input --action=change || true
 
