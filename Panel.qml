@@ -83,6 +83,15 @@ Panel {
     saveSettings({ bgMode: m })
   }
 
+  // Pill border on/off. Independent from bgMode: bgMode "none"
+  // already hides border, this toggle hides border on themed /
+  // transparent backgrounds. Default true (old behavior).
+  readonly property bool showBorder: setting("showBorder", true)
+
+  function setShowBorder(v) {
+    saveSettings({ showBorder: !!v })
+  }
+
   // Pill vertical position, always horizontally centered.
   // Unknown values fall back to bottom.
   readonly property string position: {
@@ -297,7 +306,7 @@ Panel {
       // Never expose displayText: old code returned live keystrokes
       // via IPC, any local process could snoop passwords.
       // showing bool is enough for scripting.
-      return JSON.stringify({ enabled: root.enabled, maxKeys: root.maxKeys, hideDelayMs: root.hideDelayMs, scale: root.pillScale, bgMode: root.bgMode, position: root.position, showing: root.showing, devices: monitor.deviceCount, deviceAccess: monitor.deviceAccess })
+      return JSON.stringify({ enabled: root.enabled, maxKeys: root.maxKeys, hideDelayMs: root.hideDelayMs, scale: root.pillScale, bgMode: root.bgMode, showBorder: root.showBorder, position: root.position, showing: root.showing, devices: monitor.deviceCount, deviceAccess: monitor.deviceAccess })
     }
     function preview(text: string): string {
       // Truncate: unbounded IPC inject = pill overflow / spoof wall.
@@ -486,6 +495,7 @@ Panel {
               text: modelData
               foreground: Color.popups.text
               fontFamily: Style.fontFamily
+              bordered: true
               active: root.configTab === index
               onClicked: root.configTab = index
             }
@@ -738,6 +748,22 @@ Panel {
               }
 
               PanelSectionHeader {
+                text: "BORDER"
+                foreground: Color.popups.text
+                fontFamily: Style.fontFamily
+              }
+
+              Toggle {
+                width: parent.width
+                label: "Show border"
+                description: root.showBorder ? "Pill border visible" : "Pill border hidden"
+                checked: root.showBorder
+                foreground: Color.popups.text
+                fontFamily: Style.fontFamily
+                onClicked: root.setShowBorder(!root.showBorder)
+              }
+
+              PanelSectionHeader {
                 text: "POSITION"
                 foreground: Color.popups.text
                 fontFamily: Style.fontFamily
@@ -809,7 +835,7 @@ Panel {
       color: root.bgMode === "none" ? "transparent"
         : root.bgMode === "transparent" ? Util.alpha(Color.popups.background, 0.45)
         : Util.alpha(Color.popups.background, 0.97)
-      borderSpec: root.bgMode === "none" ? Border.none()
+      borderSpec: (root.bgMode === "none" || !root.showBorder) ? Border.none()
         : Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(2)))
       width: contentText.implicitWidth + card.borderLeft + card.borderRight + root.paddingPx * 2 + Style.space(10)
       height: root.fontSizePx + card.borderTop + card.borderBottom + root.paddingPx * 2

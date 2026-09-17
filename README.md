@@ -34,10 +34,10 @@ No logout needed. Without it, the popup shows `NO INPUT ACCESS`.
 ## Settings
 
 ```json
-{ "id": "syaifulmain.showkeys", "enabled": true, "maxKeys": 5, "hideDelayMs": 1000, "scale": 1, "bgMode": "default" }
+{ "id": "syaifulmain.showkeys", "enabled": true, "maxKeys": 5, "hideDelayMs": 1000, "scale": 1, "bgMode": "default", "showBorder": true }
 ```
 
-Popup holds the on/off switch. “Key settings…” opens a tabbed window — Keys (rename + show switch per key, searchable), Display (hide / max keys / size / background / position).
+Popup holds the on/off switch. “Key settings…” opens a tabbed window — Keys (rename + show switch per key, searchable), Display (hide / max keys / size / background / border / position).
 
 ## IPC
 

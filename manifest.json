@@ -22,6 +22,7 @@
       "hideDelayMs": 1000,
       "scale": 1,
       "bgMode": "default",
+      "showBorder": true,
       "position": "bottom",
       "excluded": {},
       "keyLabels": {}
