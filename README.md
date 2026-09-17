@@ -12,6 +12,10 @@ Theme-aware, bar button with on/off switch, separate key-settings window.
 omarchy plugin add https://github.com/syaifulmain/omarchy-omashowkeys.git --enable --yes
 ```
 
+## Shortcut
+
+Shortcut: `SUPER + SHIFT + K`.
+
 ## Update
 
 ```bash
