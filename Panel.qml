@@ -228,6 +228,7 @@ Panel {
       // In-place mutate: no UI binds heldModifiers directly, only
       // composeText() reads it synchronously. Skips object alloc +
       // binding churn per press.
+      if (heldModifiers[code] === true) return
       heldModifiers[code] = true
     } else {
       var nk = []
@@ -250,13 +251,18 @@ Panel {
   // independent: lifting a modifier must not wipe a still-held key.
   function onKeyReleased(code) {
     if (Keys.isModifier(code)) {
-      delete heldModifiers[code]
-    } else {
-      var nk = []
-      for (var k = 0; k < activeKeys.length; k++)
-        if (activeKeys[k] !== code) nk.push(activeKeys[k])
-      activeKeys = nk
+      if (heldModifiers[code] === true) delete heldModifiers[code]
+      return
     }
+    // Ignore releases for keys already removed by timeout or maxKeys.
+    // Avoids an array allocation for every unrelated release event.
+    var nk = []
+    var found = false
+    for (var k = 0; k < activeKeys.length; k++) {
+      if (activeKeys[k] === code) found = true
+      else nk.push(activeKeys[k])
+    }
+    if (found) activeKeys = nk
   }
 
   // Toggling off must wipe pill now, not wait hideTimer.
@@ -289,6 +295,7 @@ Panel {
 
   KeyMonitor {
     id: monitor
+    active: root.enabled
     onKeyPressed: function (code) { root.onKeyPressed(code) }
     onKeyReleased: function (code) { root.onKeyReleased(code) }
   }

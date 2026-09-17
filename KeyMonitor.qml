@@ -17,6 +17,9 @@ Item {
   // Backend crash-loop guard: 2s -> 30s backoff, no CPU spin if
   // python3 missing or script broken.
   property int restartDelayMs: 2000
+  // Stop backend while keycast is disabled. This releases evdev fds and
+  // watcher threads instead of parsing events that UI will discard.
+  property bool active: true
 
   function validCode(c) {
     // Python already filters <0x100, but stdout is untrusted input.
@@ -27,14 +30,15 @@ Item {
   Process {
     id: process
     command: ["python3", monitorScriptPath()]
-    running: true
+    running: false
     stdout: SplitParser {
       onRead: function (line) {
-        var text = String(line).replace(/^\s+|\s+$/g, "")
-        if (text.indexOf("P ") === 0 || text.indexOf("R ") === 0) {
-          var code = parseInt(text.slice(2), 10)
+        var text = String(line).trim()
+        var kind = text.charAt(0)
+        if ((kind === "P" || kind === "R") && text.charAt(1) === " ") {
+          var code = Number(text.slice(2))
           if (!monitor.validCode(code)) return
-          if (text.charAt(0) === "P") monitor.keyPressed(code)
+          if (kind === "P") monitor.keyPressed(code)
           else monitor.keyReleased(code)
         } else if (text.indexOf("DEV ") === 0) {
           var n = parseInt(text.slice(4), 10)
@@ -49,9 +53,26 @@ Item {
       }
     }
     onExited: {
+      if (!monitor.active) return
       monitor.restartDelayMs = Math.min(30000, monitor.restartDelayMs * 2)
       restartTimer.interval = monitor.restartDelayMs
       restartTimer.restart()
+    }
+  }
+
+  Component.onCompleted: {
+    if (monitor.active) process.running = true
+  }
+
+  onActiveChanged: {
+    restartTimer.stop()
+    if (monitor.active) {
+      monitor.restartDelayMs = 2000
+      process.running = true
+    } else {
+      process.running = false
+      monitor.deviceCount = 0
+      monitor.deviceAccess = false
     }
   }
 
@@ -69,6 +90,6 @@ Item {
   Timer {
     id: restartTimer
     interval: 2000
-    onTriggered: process.running = true
+    onTriggered: if (monitor.active) process.running = true
   }
 }

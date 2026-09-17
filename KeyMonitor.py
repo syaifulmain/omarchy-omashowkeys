@@ -32,22 +32,27 @@ TYPE_BITS_REQUEST = (2 << 30) | (8 << 16) | (0x45 << 8) | 0x20
 TYPE_BITS = struct.Struct("<Q")
 
 
-def has_key_events(path):
+def has_key_events(fd):
     try:
-        with open(path, "rb", buffering=0) as fd:
-            bitmap = fcntl.ioctl(fd, TYPE_BITS_REQUEST, b"\x00" * 8)
+        bitmap = fcntl.ioctl(fd, TYPE_BITS_REQUEST, b"\x00" * 8)
         return (TYPE_BITS.unpack(bitmap)[0] >> EV_KEY) & 1 == 1
     except (OSError, ValueError):
         return False
 
 
-def watch_device(path, q, watched):
+def open_key_device(path):
     try:
         fd = os.open(path, os.O_RDONLY)
     except OSError:
-        return
-    with _WATCHED_LOCK:
-        watched.add(path)
+        return None
+    if has_key_events(fd):
+        return fd
+    with contextlib.suppress(OSError):
+        os.close(fd)
+    return None
+
+
+def watch_device(path, fd, q, watched):
     buf = b""
     try:
         while True:
@@ -91,40 +96,50 @@ def _emit(q, kind, code):
 
 
 def scan(q, watched):
+    # Reserve paths before starting threads. This makes the device count
+    # deterministic and avoids reopening every device after the ioctl probe.
     with _WATCHED_LOCK:
         known = set(watched)
     for path in glob.glob(DEVICES_GLOB):
         if path in known:
             continue
-        try:
-            if not os.access(path, os.R_OK) or not has_key_events(path):
-                continue
-        except OSError:
+        fd = open_key_device(path)
+        if fd is None:
             continue
-        t = threading.Thread(target=watch_device, args=(path, q, watched), daemon=True)
-        t.start()
-
-
-_first_scan = True
+        with _WATCHED_LOCK:
+            if path in watched:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+                continue
+            watched.add(path)
+        t = threading.Thread(target=watch_device, args=(path, fd, q, watched), daemon=True)
+        try:
+            t.start()
+        except BaseException:
+            with _WATCHED_LOCK:
+                watched.discard(path)
+            with contextlib.suppress(OSError):
+                os.close(fd)
+            raise
 
 
 def rescan_loop(q, watched):
-    # Single daemon thread, no Timer-chain pileup. Sleep first so the
-    # first DEV line is always emitted synchronously from main().
-    global _first_scan
+    # Single daemon thread, no Timer-chain pileup. Sleep after first scan.
     import time
 
+    first_scan = True
     while True:
-        time.sleep(0 if _first_scan else RESCAN_INTERVAL)
+        if not first_scan:
+            time.sleep(RESCAN_INTERVAL)
         with _WATCHED_LOCK:
             before = len(watched)
         with contextlib.suppress(Exception):
             scan(q, watched)
         with _WATCHED_LOCK:
             after = len(watched)
-        if _first_scan or after != before:
+        if first_scan or after != before:
             print(f"DEV {after}", flush=True)
-            _first_scan = False
+        first_scan = False
 
 
 def main():
