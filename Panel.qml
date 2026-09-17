@@ -478,11 +478,9 @@ Panel {
       color: Color.popups.background
       borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(2)))
       padding: Style.space(16)
-      width: Math.min(parent.width - Style.space(48), root.keyRowWidth + contentLeftInset + contentRightInset + Style.space(14))
-      // Display tab has more controls than Keys tab. Give it enough room
-      // so sliders and lower controls do not get squeezed into Close.
-      height: Math.min(parent.height - Style.space(48),
-        root.configTab === 0 ? Style.space(720) : Style.space(560))
+      width: Math.min(parent.width - Style.space(48),
+        Math.max(root.keyRowWidth + contentLeftInset + contentRightInset + Style.space(14), Style.space(520)))
+      height: Math.min(Style.space(560), parent.height - Style.space(48))
 
       Column {
         id: configColumn
