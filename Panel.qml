@@ -616,7 +616,10 @@ Panel {
 
             Column {
               id: displayColumn
-              width: displayScroll.availableWidth
+              // Reserve right-side room for the overlay vertical scrollbar,
+              // same trick as the key list delegates — otherwise it overlaps
+              // the slider track and right-aligned texts.
+              width: displayScroll.availableWidth - Style.space(14)
               height: implicitHeight
               spacing: Style.space(12)
 
