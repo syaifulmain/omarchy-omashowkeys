@@ -176,8 +176,21 @@ Panel {
   property string lastMods: ""
   property string grantStatus: ""
 
+  // Auto-install SUPER+SHIFT+K binding on first load (and every start,
+  // script is idempotent). Omarchy has no plugin install hook, so the
+  // running plugin ensures its own keybind instead of docs-only claims.
+  Component.onCompleted: ensureShortcut()
+
   function grantScriptPath() {
     return Qt.resolvedUrl("bin/omashowkeys-grant").toString().replace(/^file:\/\//, "")
+  }
+
+  function shortcutScriptPath() {
+    return Qt.resolvedUrl("bin/omashowkeys-shortcut").toString().replace(/^file:\/\//, "")
+  }
+
+  function ensureShortcut() {
+    Quickshell.execDetached([root.shortcutScriptPath()])
   }
 
   function grantAccess() {
