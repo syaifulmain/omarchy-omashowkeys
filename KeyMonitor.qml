@@ -17,9 +17,6 @@ Item {
   // Backend crash-loop guard: 2s -> 30s backoff, no CPU spin if
   // python3 missing or script broken.
   property int restartDelayMs: 2000
-  // Stop backend while keycast is disabled. This releases evdev fds and
-  // watcher threads instead of parsing events that UI will discard.
-  property bool active: true
 
   function validCode(c) {
     // Python already filters <0x100, but stdout is untrusted input.
@@ -30,7 +27,7 @@ Item {
   Process {
     id: process
     command: ["python3", monitorScriptPath()]
-    running: false
+    running: true
     stdout: SplitParser {
       onRead: function (line) {
         var text = String(line).trim()
@@ -53,26 +50,9 @@ Item {
       }
     }
     onExited: {
-      if (!monitor.active) return
       monitor.restartDelayMs = Math.min(30000, monitor.restartDelayMs * 2)
       restartTimer.interval = monitor.restartDelayMs
       restartTimer.restart()
-    }
-  }
-
-  Component.onCompleted: {
-    if (monitor.active) process.running = true
-  }
-
-  onActiveChanged: {
-    restartTimer.stop()
-    if (monitor.active) {
-      monitor.restartDelayMs = 2000
-      process.running = true
-    } else {
-      process.running = false
-      monitor.deviceCount = 0
-      monitor.deviceAccess = false
     }
   }
 
@@ -90,6 +70,6 @@ Item {
   Timer {
     id: restartTimer
     interval: 2000
-    onTriggered: if (monitor.active) process.running = true
+    onTriggered: process.running = true
   }
 }

@@ -295,7 +295,6 @@ Panel {
 
   KeyMonitor {
     id: monitor
-    active: root.enabled
     onKeyPressed: function (code) { root.onKeyPressed(code) }
     onKeyReleased: function (code) { root.onKeyReleased(code) }
   }
@@ -537,7 +536,10 @@ Panel {
         // delegates, reuseItems keeps pool across search filter changes.
         Item {
           width: parent.width
-          height: parent.height - configHero.implicitHeight - tabRow.implicitHeight - (searchRow.visible ? searchRow.implicitHeight : 0) - closeBtn.implicitHeight - parent.spacing * 4
+          // Reserve fixed header/footer space. Clamp viewport so a short
+          // screen cannot produce negative height and paint over Close.
+          height: Math.max(0, parent.height - configHero.implicitHeight - tabRow.implicitHeight - (searchRow.visible ? searchRow.implicitHeight : 0) - closeBtn.implicitHeight - parent.spacing * 4)
+          clip: true
 
           Text {
             visible: root.configTab === 1 && root.filteredKeys.length === 0
@@ -608,11 +610,14 @@ Panel {
             anchors.fill: parent
             clip: true
             contentWidth: availableWidth
+            contentHeight: displayColumn.implicitHeight
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
             ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
             Column {
+              id: displayColumn
               width: displayScroll.availableWidth
+              height: implicitHeight
               spacing: Style.space(12)
 
               Item {
@@ -646,6 +651,7 @@ Panel {
                 id: hideSlider
                 bar: root.bar
                 width: parent.width
+                height: implicitHeight
                 minimum: 0.1
                 maximum: 10
                 step: 0.1
@@ -684,6 +690,7 @@ Panel {
                 id: keysSlider
                 bar: root.bar
                 width: parent.width
+                height: implicitHeight
                 minimum: 1
                 maximum: 20
                 step: 1
@@ -723,6 +730,7 @@ Panel {
                 id: sizeSlider
                 bar: root.bar
                 width: parent.width
+                height: implicitHeight
                 minimum: 0
                 maximum: root.scaleStops.length - 1
                 step: 1
