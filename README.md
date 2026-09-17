@@ -9,7 +9,7 @@ Theme-aware, bar button with on/off switch, separate key-settings window.
 ## Install
 
 ```bash
-omarchy plugin add https://github.com/syaifulmain/omarchy-showkeys.git --enable --yes
+omarchy plugin add https://github.com/syaifulmain/omarchy-omashowkeys.git --enable --yes
 ```
 
 ## Update
