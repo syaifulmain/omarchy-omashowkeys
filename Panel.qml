@@ -16,8 +16,8 @@ import "Keys.js" as Keys
 // in shell.json bar layout entry.
 Panel {
   id: root
-  moduleName: "syaifulmain.showkeys"
-  ipcTarget: "syaifulmain.showkeys"
+  moduleName: "syaifulmain.omashowkeys"
+  ipcTarget: "syaifulmain.omashowkeys"
   manageIpc: false
 
   // ---- settings (inline shell.json entry, theme file is source of style)
@@ -177,7 +177,7 @@ Panel {
   property string grantStatus: ""
 
   function grantScriptPath() {
-    return Qt.resolvedUrl("bin/showkeys-grant").toString().replace(/^file:\/\//, "")
+    return Qt.resolvedUrl("bin/omashowkeys-grant").toString().replace(/^file:\/\//, "")
   }
 
   function grantAccess() {
@@ -293,7 +293,7 @@ Panel {
 
   // ---- IPC (single handler: Panel.manageIpc disabled so we own target)
   IpcHandler {
-    target: "syaifulmain.showkeys"
+    target: "syaifulmain.omashowkeys"
     function open(): void { root.open() }
     function close(): void { root.close() }
     function show(): void { root.open() }
@@ -444,7 +444,7 @@ Panel {
     visible: root.configOpen
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
-    WlrLayershell.namespace: "syaifulmain-showkeys-config"
+    WlrLayershell.namespace: "syaifulmain-omashowkeys-config"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Ignore
@@ -823,7 +823,7 @@ Panel {
     visible: root.showing && root.enabled
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
-    WlrLayershell.namespace: "syaifulmain-showkeys"
+    WlrLayershell.namespace: "syaifulmain-omashowkeys"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore

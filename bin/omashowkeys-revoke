@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Revoke keyboard read access for syaifulmain.showkeys — safe full clean.
+# Revoke keyboard read access for syaifulmain.omashowkeys — safe full clean.
 # Run as root via pkexec (graphical prompt through the Omarchy polkit agent):
-#   pkexec /path/to/bin/showkeys-revoke
+#   pkexec /path/to/bin/omashowkeys-revoke
 # Or directly with sudo. Run BEFORE `omarchy plugin remove` (script lives
 # inside the plugin dir). Removes ONLY our udev rule + ONLY our user ACL.
 set -euo pipefail
@@ -16,12 +16,15 @@ if [ "$TARGET_UID" -lt 1000 ]; then echo "refuse: UID $TARGET_UID below 1000 (sy
 TARGET_USER="$(id -nu "$TARGET_UID")"
 [ "$(id -u "$TARGET_USER")" = "$TARGET_UID" ] || { echo "UID lookup mismatch" >&2; exit 1; }
 
-RULE_DST="/etc/udev/rules.d/71-syaifulmain-showkeys.rules"
+RULE_DST="/etc/udev/rules.d/71-syaifulmain-omashowkeys.rules"
+# Legacy filename from before the showkeys -> omashowkeys rename.
+# Remove only if it carries the old marker (same safety pin as above).
+LEGACY_RULE="/etc/udev/rules.d/71-syaifulmain-showkeys.rules"
 
 # Safety pin: never delete a foreign rule file. Only our filename, and only
 # if it carries our marker (protects against manual overwrites by other pkgs).
 if [ -f "$RULE_DST" ]; then
-  if grep -q "syaifulmain.showkeys" "$RULE_DST"; then
+  if grep -q "syaifulmain.omashowkeys" "$RULE_DST"; then
     rm -f "$RULE_DST"
     echo "removed $RULE_DST"
   else
@@ -30,6 +33,13 @@ if [ -f "$RULE_DST" ]; then
   fi
 else
   echo "rule already gone"
+fi
+
+if [ -f "$LEGACY_RULE" ]; then
+  if grep -q "syaifulmain.showkeys" "$LEGACY_RULE"; then
+    rm -f "$LEGACY_RULE"
+    echo "removed legacy $LEGACY_RULE"
+  fi
 fi
 
 udevadm control --reload-rules

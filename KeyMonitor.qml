@@ -44,7 +44,7 @@ Item {
           monitor.deviceCount = n
           monitor.deviceAccess = n > 0
           if (!monitor.deviceAccess)
-            console.warn("showkeys: no readable /dev/input devices — use the Grant button in the popup")
+            console.warn("omashowkeys: no readable /dev/input devices — use the Grant button in the popup")
         }
       }
     }

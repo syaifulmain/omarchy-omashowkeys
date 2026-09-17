@@ -15,15 +15,15 @@ omarchy plugin add https://github.com/syaifulmain/omarchy-showkeys.git --enable 
 ## Update
 
 ```bash
-omarchy plugin update syaifulmain.showkeys --yes
+omarchy plugin update syaifulmain.omashowkeys --yes
 omarchy-restart-shell
 ```
 
 ## Uninstall
 
 ```bash
-pkexec ~/.config/omarchy/plugins/syaifulmain.showkeys/bin/showkeys-revoke
-omarchy plugin remove syaifulmain.showkeys --yes
+pkexec ~/.config/omarchy/plugins/syaifulmain.omashowkeys/bin/omashowkeys-revoke
+omarchy plugin remove syaifulmain.omashowkeys --yes
 ```
 
 ## Keyboard access
@@ -42,10 +42,10 @@ Popup holds the on/off switch. “Key settings…” opens a tabbed window — K
 ## IPC
 
 ```bash
-omarchy-shell syaifulmain.showkeys preview 'Ctrl + Shift + T'
-omarchy-shell syaifulmain.showkeys flip
-omarchy-shell syaifulmain.showkeys config
-omarchy-shell syaifulmain.showkeys tab 1
+omarchy-shell syaifulmain.omashowkeys preview 'Ctrl + Shift + T'
+omarchy-shell syaifulmain.omashowkeys flip
+omarchy-shell syaifulmain.omashowkeys config
+omarchy-shell syaifulmain.omashowkeys tab 1
 ```
 
 ## Credits

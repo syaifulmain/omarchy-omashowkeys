@@ -1,5 +1,5 @@
-# syaifulmain.showkeys: let the active local user read keyboards.
-# Installed by bin/showkeys-grant (pkexec = one password prompt).
+# syaifulmain.omashowkeys: let the active local user read keyboards.
+# Installed by bin/omashowkeys-grant (pkexec = one password prompt).
 # systemd-logind applies a per-session ACL immediately after `udevadm trigger`,
 # so no group change and no logout is needed.
 SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", TAG+="uaccess"
