@@ -14,11 +14,11 @@ omarchy plugin add https://github.com/syaifulmain/omarchy-omashowkeys.git --enab
 
 ## Keyboard access
 
-Showing key presses needs read access to `/dev/input/event*`. Run this fixed
-setup command in a terminal. It installs a udev rule (`uaccess` on keyboards):
+Showing key presses needs read access to `/dev/input/event*`. Paste this fixed
+setup command into a terminal. It installs a udev rule (`uaccess` on keyboards):
 
 ```bash
-echo 'SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", TAG+="uaccess"' | sudo tee /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules >/dev/null && sudo udevadm control --reload-rules && sudo udevadm trigger --subsystem-match=input --action=change
+sudo bash -c 'printf "%s\n" "# syaifulmain.omashowkeys: let the active local user read keyboards." "SUBSYSTEM==\"input\", KERNEL==\"event*\", ENV{ID_INPUT_KEYBOARD}==\"1\", TAG+=\"uaccess\"" > /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules && udevadm control --reload-rules && udevadm trigger --subsystem-match=input --action=change'
 ```
 
 The root command is self-contained text — nothing is executed from this plugin
@@ -40,9 +40,7 @@ omarchy-restart-shell
 ## Uninstall
 
 ```bash
-sudo rm -f /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules
-sudo udevadm control --reload-rules
-sudo udevadm trigger --subsystem-match=input --action=change
+sudo bash -c 'rm -f /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules && udevadm control --reload-rules && udevadm trigger --subsystem-match=input --action=change'
 omarchy plugin remove syaifulmain.omashowkeys --yes
 ```
 
