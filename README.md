@@ -29,12 +29,21 @@ you back here. KeyMonitor rescans every 5 s and picks devices up alone.
 ## Shortcut (manual, optional)
 
 No binding is installed for you — the plugin never touches your Hyprland
-config. To toggle the keycast from the keyboard, add your own binding in
-`~/.config/hypr/bindings.conf`:
+config. To toggle the keycast from the keyboard, add your own binding.
+
+In `~/.config/hypr/bindings.conf`:
 
 ```conf
 bindd = SUPER SHIFT, K, OmaShowKeys, exec, omarchy-shell syaifulmain.omashowkeys flip
 ```
+
+Or in `~/.config/hypr/bindings.lua`, same style as the Ports example:
+
+```lua
+o.bind("SUPER + SHIFT + K", "OmaShowKeys", "omarchy-shell syaifulmain.omashowkeys flip")
+```
+
+Change `SUPER + SHIFT + K` to any combo you like.
 
 ## Update
 
