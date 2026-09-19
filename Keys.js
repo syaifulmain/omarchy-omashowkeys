@@ -1,5 +1,6 @@
 // Evdev code -> label. Codes from linux/input-event-codes.h, < 0x100 only
-// (KeyMonitor.py filters mouse/buttons at source).
+// (KeyMonitor.qml converts the Hyprland xkb keycode to evdev and drops
+// everything outside < 0x100 at the source).
 
 // O(1) lookup: .includes() scans, map access does not.
 const MOD_SET = {

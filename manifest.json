@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "syaifulmain.omashowkeys",
   "name": "OmaShowKeys",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Muhamad Syaifullah",
   "license": "MIT",
-  "description": "On-screen keycast pill in wshowkeys style: shows pressed keys bottom-center, follows the Omarchy theme, toggled from the bar.",
+  "description": "On-screen keycast pill in wshowkeys style: shows pressed keys bottom-center, follows the Omarchy theme, toggled from the bar. Reads Hyprland's Lua key event bus.",
   "kinds": ["bar-widget"],
   "entryPoints": {
     "barWidget": "Panel.qml"
@@ -24,6 +24,7 @@
       "bgMode": "default",
       "showBorder": true,
       "position": "bottom",
+      "hPosition": "center",
       "excluded": {},
       "keyLabels": {}
     }

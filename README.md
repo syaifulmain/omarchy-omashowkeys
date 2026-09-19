@@ -3,8 +3,7 @@
 ![OmaShowKeys preview](preview.png)
 
 wshowkeys-style keycast pill for [Omarchy](https://omarchy.org): shows pressed
-keys at the bottom center, then fades out.
-Theme-aware, bar button with on/off switch, separate key-settings window.
+keys at the bottom center, then fades out. Theme-aware, toggled from the bar.
 
 ## Install
 
@@ -12,24 +11,38 @@ Theme-aware, bar button with on/off switch, separate key-settings window.
 omarchy plugin add https://github.com/syaifulmain/omarchy-omashowkeys.git --enable --yes
 ```
 
-## Keyboard access
-
-Showing key presses needs read access to `/dev/input/event*`. Paste this fixed
-setup command into a terminal. It installs a udev rule (`uaccess` on keyboards):
+## Update
 
 ```bash
-sudo bash -c 'printf "%s\n" "# syaifulmain.omashowkeys: let the active local user read keyboards." "SUBSYSTEM==\"input\", KERNEL==\"event*\", ENV{ID_INPUT_KEYBOARD}==\"1\", TAG+=\"uaccess\"" > /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules && udevadm control --reload-rules && udevadm trigger --subsystem-match=input --action=change'
+omarchy plugin update syaifulmain.omashowkeys --yes
+omarchy-restart-shell
 ```
 
-The root command is self-contained text — nothing is executed from this plugin
-directory. logind applies the `uaccess` ACL right after `udevadm trigger`, so no
-logout is needed. Without access, the popup shows `NO INPUT ACCESS` and points
-you back here. KeyMonitor rescans every 5 s and picks devices up alone.
+## Uninstall
 
-## Shortcut (manual, optional)
+```bash
+omarchy plugin remove syaifulmain.omashowkeys --yes
+```
 
-No binding is installed for you — the plugin never touches your Hyprland
-config. To toggle the keycast from the keyboard, add your own binding.
+## Settings
+
+Defaults:
+
+- Hide after: 1 s
+- Max keys: 5
+- Size: 1x
+- Background: Default
+- Border: Shown
+- Position: Bottom center
+
+The popup holds the on/off switch. “Key settings…” opens a tabbed window —
+Keys (rename + show switch per key, searchable), Display (hide / max keys /
+size / background / border / position).
+
+## Shortcut
+
+No binding is installed for you. To toggle the keycast from the keyboard, add
+your own binding.
 
 In `~/.config/hypr/bindings.conf`:
 
@@ -45,28 +58,6 @@ o.bind("SUPER + SHIFT + K", "OmaShowKeys", "omarchy-shell syaifulmain.omashowkey
 
 Change `SUPER + SHIFT + K` to any combo you like.
 
-## Update
-
-```bash
-omarchy plugin update syaifulmain.omashowkeys --yes
-omarchy-restart-shell
-```
-
-## Uninstall
-
-```bash
-sudo bash -c 'rm -f /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules && udevadm control --reload-rules && udevadm trigger --subsystem-match=input --action=change'
-omarchy plugin remove syaifulmain.omashowkeys --yes
-```
-
-## Settings
-
-```json
-{ "id": "syaifulmain.omashowkeys", "enabled": true, "maxKeys": 5, "hideDelayMs": 1000, "scale": 1, "bgMode": "default", "showBorder": true }
-```
-
-Popup holds the on/off switch. “Key settings…” opens a tabbed window — Keys (rename + show switch per key, searchable), Display (hide / max keys / size / background / border / position).
-
 ## IPC
 
 ```bash
@@ -74,9 +65,11 @@ omarchy-shell syaifulmain.omashowkeys preview 'Ctrl + Shift + T'
 omarchy-shell syaifulmain.omashowkeys flip
 omarchy-shell syaifulmain.omashowkeys config
 omarchy-shell syaifulmain.omashowkeys tab 1
+omarchy-shell syaifulmain.omashowkeys state
 ```
 
 ## Credits
 
 - Keycasting lineage: [wshowkeys](https://github.com/ammgws/wshowkeys),
   [screenkey](https://gitlab.com/screenkey/screenkey)
+- Event-source approach: [omarchy-keycast](https://github.com/devmobasa/omarchy-keycast)

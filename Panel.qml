@@ -97,8 +97,7 @@ Panel {
     saveSettings({ showBorder: !!v })
   }
 
-  // Pill vertical position, always horizontally centered.
-  // Unknown values fall back to bottom.
+  // Pill vertical position. Unknown values fall back to bottom.
   readonly property string position: {
     var p = setting("position", "bottom")
     return p === "top" || p === "center" ? p : "bottom"
@@ -107,6 +106,17 @@ Panel {
   function setPosition(p) {
     if (p !== "top" && p !== "center") p = "bottom"
     saveSettings({ position: p })
+  }
+
+  // Pill horizontal position. Unknown values fall back to center.
+  readonly property string hPosition: {
+    var p = setting("hPosition", "center")
+    return p === "left" || p === "right" ? p : "center"
+  }
+
+  function setHPosition(p) {
+    if (p !== "left" && p !== "right") p = "center"
+    saveSettings({ hPosition: p })
   }
 
   // Keys that never reach the pill (per-key exclusion).
@@ -169,6 +179,7 @@ Panel {
   readonly property real fontSizePx: Style.fontPx(2.2) * pillScale
   readonly property int paddingPx: Math.max(Style.space(6), Math.round(fontSizePx * 0.45))
   readonly property int edgeMargin: Style.space(67)
+  readonly property int hEdgeMargin: Style.space(24)
 
   // ---- key state
   property var heldModifiers: ({})
@@ -273,8 +284,12 @@ Panel {
     }
   }
 
+  // Handler is registered/unregistered by the `active` binding: turning
+  // keycast off removes the compositor subscription, so no keystroke
+  // reaches this shell while the pill is off.
   KeyMonitor {
     id: monitor
+    active: root.enabled
     onKeyPressed: function (code) { root.onKeyPressed(code) }
     onKeyReleased: function (code) { root.onKeyReleased(code) }
   }
@@ -294,7 +309,7 @@ Panel {
       // Never expose displayText: old code returned live keystrokes
       // via IPC, any local process could snoop passwords.
       // showing bool is enough for scripting.
-      return JSON.stringify({ enabled: root.enabled, maxKeys: root.maxKeys, hideDelayMs: root.hideDelayMs, scale: root.pillScale, bgMode: root.bgMode, showBorder: root.showBorder, position: root.position, showing: root.showing, devices: monitor.deviceCount, deviceAccess: monitor.deviceAccess })
+      return JSON.stringify({ enabled: root.enabled, maxKeys: root.maxKeys, hideDelayMs: root.hideDelayMs, scale: root.pillScale, bgMode: root.bgMode, showBorder: root.showBorder, position: root.position, hPosition: root.hPosition, showing: root.showing, available: monitor.available, error: monitor.lastError })
     }
     function preview(text: string): string {
       // Truncate: unbounded IPC inject = pill overflow / spoof wall.
@@ -355,7 +370,7 @@ Panel {
 
         PanelHero {
           title: "OmaShowKeys"
-          meta: monitor.deviceAccess ? "WSHOWKEYS-STYLE KEYCAST" : "NO INPUT ACCESS"
+          meta: monitor.available ? "WSHOWKEYS-STYLE KEYCAST" : "KEYCAST UNAVAILABLE"
           foreground: root.bar.foreground
           fontFamily: root.bar.fontFamily
           iconComponent: heroIcon
@@ -394,9 +409,9 @@ Panel {
 
         Text {
           width: parent.width
-          visible: !monitor.deviceAccess
+          visible: !monitor.available
           textFormat: Text.PlainText
-          text: "Keyboard access needed to show key presses.\n\nRun the setup command from the plugin README (section Keyboard access), then reopen this popup."
+          text: "Keycast needs Hyprland's Lua config provider (Omarchy Quattro, Hyprland 0.56+).\n\n" + (monitor.lastError !== "" ? monitor.lastError : "No error reported.")
           color: root.bar.foreground
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.caption
@@ -749,31 +764,80 @@ Panel {
                 fontFamily: Style.fontFamily
               }
 
-              Grid {
+              // Two columns: vertical axis (top/center/bottom) and
+              // horizontal axis (right/center/left).
+              Row {
+                id: positionRow
                 width: parent.width
-                columns: 3
-                columnSpacing: Style.spacing.xs
-                rowSpacing: Style.spacing.xs
+                spacing: Style.spacing.md
 
-                Repeater {
-                  model: [
-                    { key: "top", label: "Top" },
-                    { key: "center", label: "Center" },
-                    { key: "bottom", label: "Bottom" },
-                  ]
+                Column {
+                  width: (positionRow.width - positionRow.spacing) / 2
+                  spacing: Style.spacing.xs
 
-                  Button {
-                    required property var modelData
-                    text: modelData.label
-                    fontSize: Style.font.caption
+                  PanelSectionHeader {
+                    width: parent.width
+                    text: "VERTICAL"
                     foreground: Color.popups.text
                     fontFamily: Style.fontFamily
-                    horizontalPadding: Style.spacing.xs
-                    verticalPadding: Style.spacing.controlPaddingY
-                    bordered: true
-                    width: Math.max(1, Math.floor((parent.width - Style.spacing.xs * 2) / 3))
-                    active: root.position === modelData.key
-                    onClicked: root.setPosition(modelData.key)
+                    horizontalAlignment: Text.AlignHCenter
+                  }
+
+                  Repeater {
+                    model: [
+                      { key: "top", label: "Top" },
+                      { key: "center", label: "Center" },
+                      { key: "bottom", label: "Bottom" },
+                    ]
+
+                    Button {
+                      required property var modelData
+                      width: parent.width
+                      text: modelData.label
+                      fontSize: Style.font.caption
+                      foreground: Color.popups.text
+                      fontFamily: Style.fontFamily
+                      horizontalPadding: Style.spacing.xs
+                      verticalPadding: Style.spacing.controlPaddingY
+                      bordered: true
+                      active: root.position === modelData.key
+                      onClicked: root.setPosition(modelData.key)
+                    }
+                  }
+                }
+
+                Column {
+                  width: (positionRow.width - positionRow.spacing) / 2
+                  spacing: Style.spacing.xs
+
+                  PanelSectionHeader {
+                    width: parent.width
+                    text: "HORIZONTAL"
+                    foreground: Color.popups.text
+                    fontFamily: Style.fontFamily
+                    horizontalAlignment: Text.AlignHCenter
+                  }
+
+                  Repeater {
+                    model: [
+                      { key: "right", label: "Right" },
+                      { key: "center", label: "Center" },
+                      { key: "left", label: "Left" },
+                    ]
+
+                    Button {
+                      required property var modelData
+                      width: parent.width
+                      text: modelData.label
+                      fontSize: Style.font.caption
+                      foreground: Color.popups.text
+                      fontFamily: Style.fontFamily
+                      horizontalPadding: Style.spacing.xs
+                      verticalPadding: Style.spacing.controlPaddingY
+                      bordered: true
+                      active: root.hPosition === modelData.key
+                      onClicked: root.setHPosition(modelData.key)
+                    }
                   }
                 }
               }
@@ -821,7 +885,9 @@ Panel {
       height: root.fontSizePx + card.borderTop + card.borderBottom + root.paddingPx * 2
       // Manual x/y: conditional vertical anchors briefly co-activate
       // on position change and stretch the pill full height.
-      x: Math.round((parent.width - width) / 2)
+      x: root.hPosition === "left" ? root.hEdgeMargin
+        : root.hPosition === "right" ? parent.width - width - root.hEdgeMargin
+        : Math.round((parent.width - width) / 2)
       y: root.position === "top" ? root.edgeMargin
         : root.position === "center" ? Math.round((parent.height - height) / 2)
         : parent.height - height - root.edgeMargin
