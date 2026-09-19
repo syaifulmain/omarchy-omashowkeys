@@ -180,28 +180,6 @@ Panel {
   property int lastCode: -1
   property string lastMods: ""
 
-  // SUPER+SHIFT+K binding is OPT-IN (marketplace rule: never touch user
-  // config without explicit consent). Popup toggle sets the flag and runs
-  // the idempotent installer; on later loads we only re-assert when the
-  // user opted in (Hyprland reload can drop non-sourced appends).
-  Component.onCompleted: if (root.installShortcut) ensureShortcut()
-
-  readonly property bool installShortcut: setting("installShortcut", false)
-
-  function setInstallShortcut(v) {
-    saveSettings({ installShortcut: !!v })
-    ensureShortcut(!!v)
-  }
-
-  function shortcutScriptPath() {
-    return Qt.resolvedUrl("bin/omashowkeys-shortcut").toString().replace(/^file:\/\//, "")
-  }
-
-  function ensureShortcut(add) {
-    var args = add === false ? ["--remove"] : []
-    Quickshell.execDetached([root.shortcutScriptPath()].concat(args))
-  }
-
   function composeText() {
     var parts = Keys.modifierLabels(heldModifiers, keyLabels)
     for (var i = 0; i < activeKeys.length; i++)
@@ -402,21 +380,6 @@ Panel {
           foreground: root.bar.foreground
           fontFamily: root.bar.fontFamily
           onClicked: root.setEnabled(!root.enabled)
-        }
-
-        // Opt-in SUPER+SHIFT+K: explicit consent before the plugin ever
-        // writes to the user's Hyprland binding files. Off also removes
-        // the binding it previously installed.
-        Toggle {
-          width: parent.width
-          label: "Install SUPER + SHIFT + K shortcut"
-          description: root.installShortcut
-            ? "Shortcut active — toggles keycast on/off"
-            : "Adds a toggle binding to your Hyprland bindings"
-          checked: root.installShortcut
-          foreground: root.bar.foreground
-          fontFamily: root.bar.fontFamily
-          onClicked: root.setInstallShortcut(!root.installShortcut)
         }
 
         // Display controls live in the Display tab of Key settings.

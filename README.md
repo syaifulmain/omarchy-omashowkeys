@@ -26,18 +26,14 @@ directory. logind applies the `uaccess` ACL right after `udevadm trigger`, so no
 logout is needed. Without access, the popup shows `NO INPUT ACCESS` and points
 you back here. KeyMonitor rescans every 5 s and picks devices up alone.
 
-## Shortcut
+## Shortcut (manual, optional)
 
-Off by default. Open the bar popup and enable **Install SUPER + SHIFT + K
-shortcut** — this adds an idempotent, user-level toggle binding to
-`~/.config/hypr/bindings.lua` (and `bindings.conf` when present). Turning it
-off removes the binding again.
+No binding is installed for you — the plugin never touches your Hyprland
+config. To toggle the keycast from the keyboard, add your own binding in
+`~/.config/hypr/bindings.conf`:
 
-To manage it by hand instead:
-
-```bash
-~/.local/share/omarchy/plugins/syaifulmain.omashowkeys/bin/omashowkeys-shortcut           # add
-~/.local/share/omarchy/plugins/syaifulmain.omashowkeys/bin/omashowkeys-shortcut --remove  # remove
+```conf
+bindd = SUPER SHIFT, K, OmaShowKeys, exec, omarchy-shell syaifulmain.omashowkeys flip
 ```
 
 ## Update

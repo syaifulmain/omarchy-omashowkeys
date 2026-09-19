@@ -24,7 +24,6 @@
       "bgMode": "default",
       "showBorder": true,
       "position": "bottom",
-      "installShortcut": false,
       "excluded": {},
       "keyLabels": {}
     }
