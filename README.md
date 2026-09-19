@@ -28,7 +28,17 @@ you back here. KeyMonitor rescans every 5 s and picks devices up alone.
 
 ## Shortcut
 
-Shortcut: `SUPER + SHIFT + K`.
+Off by default. Open the bar popup and enable **Install SUPER + SHIFT + K
+shortcut** — this adds an idempotent, user-level toggle binding to
+`~/.config/hypr/bindings.lua` (and `bindings.conf` when present). Turning it
+off removes the binding again.
+
+To manage it by hand instead:
+
+```bash
+~/.local/share/omarchy/plugins/syaifulmain.omashowkeys/bin/omashowkeys-shortcut           # add
+~/.local/share/omarchy/plugins/syaifulmain.omashowkeys/bin/omashowkeys-shortcut --remove  # remove
+```
 
 ## Update
 
