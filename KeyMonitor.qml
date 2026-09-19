@@ -2,12 +2,12 @@ import QtQuick
 import Quickshell.Io
 
 // Backend: runs KeyMonitor.py, emits keyPressed/keyReleased.
-// Access comes from the one-click pkexec grant (udev rule + ACL).
+// Access comes from the fixed setup command (README: Keyboard access).
 Item {
   id: monitor
 
   // Pessimistic until the backend reports: DEV 0 (no access) must show
-  // the grant button, so "unknown" and "none" both start as no-access.
+  // the setup command, so "unknown" and "none" both start as no-access.
   property bool deviceAccess: false
   property int deviceCount: 0
 

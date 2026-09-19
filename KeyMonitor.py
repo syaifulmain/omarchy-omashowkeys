@@ -7,9 +7,9 @@ Protocol (stdout, parsed by KeyMonitor.qml SplitParser):
   DEV <n>   device count (always on first scan, then on change)
 
 Filters: EV_KEY only, code < 0x100, value 0/1 only (drop autorepeat=2).
-Needs read access to /dev/input/event*. The plugin obtains it with a
-one-click pkexec grant (udev rule + ACL, no logout). Without access the
-script watches zero devices and reports DEV 0.
+Needs read access to /dev/input/event*. The user obtains it by running
+the fixed setup command (README: Keyboard access) in a terminal. Without
+access the script watches zero devices and reports DEV 0.
 """
 
 import contextlib

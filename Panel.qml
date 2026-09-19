@@ -176,14 +176,25 @@ Panel {
   property string lastMods: ""
   property string grantStatus: ""
 
+  // Self-contained fixed setup command. Root never reads anything from
+  // the plugin dir: the command is literal text the admin pastes into a
+  // terminal (review finding: never execute a user-writable file across
+  // the privilege boundary — the one-click pkexec grant is removed).
+  // Installs the udev rule; logind applies the uaccess ACL right after
+  // `udevadm trigger`, so no logout is needed.
+  readonly property string setupCommand:
+    "sudo bash -c 'printf \"%s\\n\" " +
+    "\"# syaifulmain.omashowkeys: let the active local user read keyboards.\" " +
+    "\"SUBSYSTEM==\\\"input\\\", KERNEL==\\\"event*\\\", " +
+    "ENV{ID_INPUT_KEYBOARD}==\\\"1\\\", TAG+=\\\"uaccess\\\"\" " +
+    "> /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules && " +
+    "udevadm control --reload-rules && " +
+    "udevadm trigger --subsystem-match=input --action=change'"
+
   // Auto-install SUPER+SHIFT+K binding on first load (and every start,
   // script is idempotent). Omarchy has no plugin install hook, so the
   // running plugin ensures its own keybind instead of docs-only claims.
   Component.onCompleted: ensureShortcut()
-
-  function grantScriptPath() {
-    return Qt.resolvedUrl("bin/omashowkeys-grant").toString().replace(/^file:\/\//, "")
-  }
 
   function shortcutScriptPath() {
     return Qt.resolvedUrl("bin/omashowkeys-shortcut").toString().replace(/^file:\/\//, "")
@@ -193,11 +204,11 @@ Panel {
     Quickshell.execDetached([root.shortcutScriptPath()])
   }
 
-  function grantAccess() {
-    if (grantProc.running) return
-    root.grantStatus = "Waiting for password…"
-    grantProc.command = ["pkexec", root.grantScriptPath()]
-    grantProc.running = true
+  function copySetupCommand() {
+    // Clipboard write is user-space: root is never involved here, the
+    // copied text is the fixed command the admin runs themselves.
+    root.grantStatus = "Copied — paste it into a terminal, then restart this popup."
+    Quickshell.execDetached(["wl-copy", root.setupCommand])
   }
 
   function composeText() {
@@ -297,17 +308,6 @@ Panel {
     id: monitor
     onKeyPressed: function (code) { root.onKeyPressed(code) }
     onKeyReleased: function (code) { root.onKeyReleased(code) }
-  }
-
-  // One-shot privilege escalation: pkexec prompts for the password
-  // graphically (Omarchy polkit agent), installs the udev rule, applies
-  // the ACL. KeyMonitor rescans every 5 s and picks devices up alone.
-  Process {
-    id: grantProc
-    onExited: function (exitCode) {
-      if (exitCode === 0) root.grantStatus = "Access granted — rescanning keyboards…"
-      else root.grantStatus = "Cancelled. Click the button to try again."
-    }
   }
 
   // ---- IPC (single handler: Panel.manageIpc disabled so we own target)
@@ -437,17 +437,17 @@ Panel {
         Button {
           width: parent.width
           visible: !monitor.deviceAccess
-          text: "Grant keyboard access"
+          text: "Copy setup command"
           foreground: root.bar.foreground
           fontFamily: root.bar.fontFamily
-          onClicked: root.grantAccess()
+          onClicked: root.copySetupCommand()
         }
 
         Text {
           width: parent.width
-          visible: !monitor.deviceAccess && root.grantStatus !== ""
+          visible: !monitor.deviceAccess
           textFormat: Text.PlainText
-          text: root.grantStatus
+          text: root.grantStatus !== "" ? root.grantStatus : "Run the copied command in a terminal (README: Keyboard access)."
           color: root.bar.foreground
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.caption
