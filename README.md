@@ -14,9 +14,8 @@ omarchy plugin add https://github.com/syaifulmain/omarchy-omashowkeys.git --enab
 
 ## Keyboard access
 
-Showing key presses needs read access to `/dev/input/event*`. Copy the fixed
-setup command from the bar button (**Copy setup command**) or paste it from
-here. It installs a udev rule (`uaccess` on keyboards) — run it in a terminal:
+Showing key presses needs read access to `/dev/input/event*`. Paste this fixed
+setup command into a terminal. It installs a udev rule (`uaccess` on keyboards):
 
 ```bash
 sudo bash -c 'printf "%s\n" "# syaifulmain.omashowkeys: let the active local user read keyboards." "SUBSYSTEM==\"input\", KERNEL==\"event*\", ENV{ID_INPUT_KEYBOARD}==\"1\", TAG+=\"uaccess\"" > /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules && udevadm control --reload-rules && udevadm trigger --subsystem-match=input --action=change'
@@ -24,9 +23,8 @@ sudo bash -c 'printf "%s\n" "# syaifulmain.omashowkeys: let the active local use
 
 The root command is self-contained text — nothing is executed from this plugin
 directory. logind applies the `uaccess` ACL right after `udevadm trigger`, so no
-logout is needed. Without access, the popup shows `NO INPUT ACCESS` and a
-**Copy setup command** button. KeyMonitor rescans every 5 s and picks devices up
-alone.
+logout is needed. Without access, the popup shows `NO INPUT ACCESS` and points
+you back here. KeyMonitor rescans every 5 s and picks devices up alone.
 
 ## Shortcut
 

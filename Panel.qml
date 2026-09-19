@@ -174,22 +174,6 @@ Panel {
   property int repeatCount: 1
   property int lastCode: -1
   property string lastMods: ""
-  property string grantStatus: ""
-
-  // Self-contained fixed setup command. Root never reads anything from
-  // the plugin dir: the command is literal text the admin pastes into a
-  // terminal (review finding: never execute a user-writable file across
-  // the privilege boundary — the one-click pkexec grant is removed).
-  // Installs the udev rule; logind applies the uaccess ACL right after
-  // `udevadm trigger`, so no logout is needed.
-  readonly property string setupCommand:
-    "sudo bash -c 'printf \"%s\\n\" " +
-    "\"# syaifulmain.omashowkeys: let the active local user read keyboards.\" " +
-    "\"SUBSYSTEM==\\\"input\\\", KERNEL==\\\"event*\\\", " +
-    "ENV{ID_INPUT_KEYBOARD}==\\\"1\\\", TAG+=\\\"uaccess\\\"\" " +
-    "> /etc/udev/rules.d/71-syaifulmain-omashowkeys.rules && " +
-    "udevadm control --reload-rules && " +
-    "udevadm trigger --subsystem-match=input --action=change'"
 
   // Auto-install SUPER+SHIFT+K binding on first load (and every start,
   // script is idempotent). Omarchy has no plugin install hook, so the
@@ -202,13 +186,6 @@ Panel {
 
   function ensureShortcut() {
     Quickshell.execDetached([root.shortcutScriptPath()])
-  }
-
-  function copySetupCommand() {
-    // Clipboard write is user-space: root is never involved here, the
-    // copied text is the fixed command the admin runs themselves.
-    root.grantStatus = "Copied — paste it into a terminal, then restart this popup."
-    Quickshell.execDetached(["wl-copy", root.setupCommand])
   }
 
   function composeText() {
@@ -427,27 +404,7 @@ Panel {
           width: parent.width
           visible: !monitor.deviceAccess
           textFormat: Text.PlainText
-          text: "Keyboard access needed to show key presses."
-          color: root.bar.foreground
-          font.family: root.bar.fontFamily
-          font.pixelSize: Style.font.caption
-          wrapMode: Text.Wrap
-        }
-
-        Button {
-          width: parent.width
-          visible: !monitor.deviceAccess
-          text: "Copy setup command"
-          foreground: root.bar.foreground
-          fontFamily: root.bar.fontFamily
-          onClicked: root.copySetupCommand()
-        }
-
-        Text {
-          width: parent.width
-          visible: !monitor.deviceAccess
-          textFormat: Text.PlainText
-          text: root.grantStatus !== "" ? root.grantStatus : "Run the copied command in a terminal (README: Keyboard access)."
+          text: "Keyboard access needed to show key presses.\n\nRun the setup command from the plugin README (section Keyboard access), then reopen this popup."
           color: root.bar.foreground
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.caption
