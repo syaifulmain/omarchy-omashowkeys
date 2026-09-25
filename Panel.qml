@@ -12,8 +12,8 @@ import "Keys.js" as Keys
 //
 // Theme: 100% theme-driven — Color.popups background/text/border,
 // Style.cornerRadius, Style.font. Re-themes live on `omarchy theme set`.
-// Bar button opens popup with on/off switch; state persists inline
-// in shell.json bar layout entry.
+// Bar button opens popup on left click; right click and scroll control
+// Show key presses visibility. State persists inline in shell.json entry.
 Panel {
   id: root
   moduleName: "syaifulmain.omashowkeys"
@@ -340,7 +340,21 @@ Panel {
     // `dimmed` (not manual opacity) keeps concealed logic + fade animation.
     dimmed: !root.enabled
     tooltipText: root.enabled ? "OmaShowKeys (on)" : "OmaShowKeys (off)"
-    onPressed: function () { root.toggle() }
+    onPressed: function (buttonCode) {
+      if (buttonCode === Qt.RightButton) {
+        // Right click changes keycast visibility only; never opens popup.
+        root.close()
+        root.setEnabled(!root.enabled)
+      } else if (buttonCode === Qt.LeftButton) {
+        root.toggle()
+      }
+    }
+    onWheelMoved: function (delta) {
+      // Positive angleDelta is scroll up. Guards make repeated scrolls
+      // idempotent and avoid rewriting unchanged settings.
+      if (delta > 0 && !root.enabled) root.setEnabled(true)
+      else if (delta < 0 && root.enabled) root.setEnabled(false)
+    }
   }
 
   function openConfig() { root.close(); root.configOpen = true }

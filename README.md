@@ -5,6 +5,14 @@
 wshowkeys-style keycast pill for [Omarchy](https://omarchy.org): shows pressed
 keys at the bottom center, then fades out. Theme-aware, toggled from the bar.
 
+## Bar controls
+
+- Left click: open or close popup.
+- Right click: toggle **Show key presses** visibility without opening popup.
+- Scroll up: enable **Show key presses**.
+- Scroll down: disable **Show key presses**.
+- Middle click: no action.
+
 ## Install
 
 ```bash
